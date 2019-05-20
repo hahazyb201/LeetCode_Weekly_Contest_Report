@@ -1,0 +1,166 @@
+/*
+* Created by Yibing Zhang
+*/
+1.Last Stone Weight
+Question Link: https://leetcode.com/contest/weekly-contest-137/problems/last-stone-weight/
+
+Explanation:
+This is a easy one, typical people can solve this in no more than 5 minutes. Especially when you have heard of Huffman tree.
+I use a PriorityQueue(max heap) in Java. Push all rocks into this PriorityQueue. And pop out two biggest rocks at one time. 
+Smash them together and push the result back into the PriorityQueue. Repeated those steps until there was only rock. Returned 
+it as the result.
+
+Code:
+class Solution {
+    public int lastStoneWeight(int[] stones) {
+        Queue<Integer> que=new PriorityQueue<Integer>(new Comparator<Integer>(){
+            @Override
+            public int compare(Integer i1,Integer i2){
+                return i2-i1;
+            }
+        });
+        for(int n:stones){
+            que.offer(n);
+        }
+        while(que.size()>1){
+            int s1=que.poll();
+            int s2=que.poll();
+            if(s1==s2){
+                continue;
+            }
+            que.offer(Math.abs(s1-s2));
+        }
+        return que.isEmpty()?0:que.poll();
+    }
+}
+
+
+2.Remove All Adjacent Duplicates In String
+Question Link: https://leetcode.com/contest/weekly-contest-137/problems/remove-all-adjacent-duplicates-in-string/
+
+Explanation:
+This is also an easy question. It ask us to remove all adjacent and equal letters and return a final string in which
+there is no adjacent duplicates. The best data structure to fit in the problem is stack. I push characters in the string
+into the stack one by one. Each time I push a character into the stack I check whether it is the same as the peak element
+in the stack. If it is, then I will pop out the peak element. Otherwise I will just push the character into the stack. 
+Finally, use all characters in the stack to construct a string and return it.
+
+Code:
+class Solution {
+    public String removeDuplicates(String S) {
+        Stack<Character> st=new Stack<Character>();
+        char[] ca=S.toCharArray();
+        for(char c:ca){
+            if(st.isEmpty()){
+                st.push(c);
+            }else{
+                if(st.peek()==c){
+                    st.pop();
+                }else{
+                    st.push(c);
+                }
+            }
+        }
+        StringBuilder sb=new StringBuilder();
+        while(!st.isEmpty()){
+            sb.append(st.pop());
+        }
+        return sb.reverse().toString();
+    }
+}
+
+
+3.Longest String Chain
+Question Link: https://leetcode.com/contest/weekly-contest-137/problems/longest-string-chain/
+
+Explanation:
+The important thing is to realize that this is a dynamic programming problem. Because we know that a predecessor of a
+word must be one character shorter than it and they only differ in one character. So we need to sort the list of words
+in an ascending order according to their length. And the DP problem is described as follow:
+dp[i]=Max(1+dp[predecessor of word i] | for all predecessors of word i)
+And dp[i] means the longest word chain ending at word i in the sorted word list.
+
+Code:
+class Solution {
+    public int longestStrChain(String[] words) {
+        Arrays.sort(words,new Comparator<String>(){
+            @Override
+            public int compare(String s1,String s2){
+                return s1.length()-s2.length();
+            }
+        });
+        int[] dp=new int[words.length];
+        dp[0]=1;
+        int max=1;
+        for(int i=1;i<words.length;i++){
+            dp[i]=1;
+            for(int j=i-1;j>=0;j--){
+                if(words[j].length()==words[i].length()){
+                    continue;
+                }
+                if(words[j].length()+1<words[i].length()){
+                    break;
+                }
+                if(oneDiff(words[i],words[j])){
+                    dp[i]=Math.max(dp[i],1+dp[j]);
+                }
+            }
+            max=Math.max(max,dp[i]);
+        }
+        return max;
+    }
+    private boolean oneDiff(String s1,String s2){
+        int p1=0,p2=0;
+        while(p2<s2.length()&&p1<s1.length()){
+            if(s1.charAt(p1)==s2.charAt(p2)){
+                p1++;
+                p2++;
+            }else{
+                p1++;
+            }
+        }
+        return p2==s2.length();
+    }
+}
+
+
+4.Last Stone Weight II
+Question Link: https://leetcode.com/contest/weekly-contest-137/problems/last-stone-weight-ii/
+
+Explanation:
+This is the most difficult problem in this contest. And it is kind of tricky. Let's think of this problem in this way.
+We divide all rocks into two groups. And each time we only smash a rock from one group with a rock from the other group. In 
+this way,the sum of weight of the first group and the sum of weight of the second group both decrease by the weight of 
+that smaller rock. And we keep smashing rocks until there is only one rock. So the problem is to minimize the weight of that 
+last rock. Think carefully about this question. It is really tricky and interesting. Then in order to minimize the weight of the
+last rock, we need to minimize the difference between sums of those two groups. In other words, we need to make the sum of the 
+smaller group as close to a half of the total sum as possible. So the dynamic programming prblem can be described as follows:
+dp[i][j]: is there a subset of rocks from 1 to j (1-indexed) whose sum is i. The time complexity of this algorithm is O(S*n). 
+S is the sum of weights of all rocks.
+
+Code:
+class Solution {
+    public int lastStoneWeightII(int[] stones) {
+        int sum=0,n=stones.length;
+        for(int m:stones){
+            sum+=m;
+        }
+        boolean[][] dp=new boolean[sum+1][n+1];
+        for(int i=0;i<=n;i++){
+            dp[0][i]=true;
+        }
+        int maxs=Integer.MIN_VALUE;
+        for(int i=1;i<=sum/2;i++){
+            for(int j=1;j<=n;j++){
+                if(dp[i][j-1]||(i>=stones[j-1]&&dp[i-stones[j-1]][j-1])){
+                    dp[i][j]=true;
+                }
+            }
+            if(dp[i][n]){
+                maxs=Math.max(i,maxs);
+            }
+        }
+        return sum-2*maxs; //=(sum-maxs)-maxs=sum of bigger group-sum of smaller group
+    }
+}
+
